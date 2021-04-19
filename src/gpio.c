@@ -18,7 +18,7 @@
 // #define GPIOC_ENABLE
 // #define GPIOF_ENABLE
 
-#define WITH_EXTI
+// #define WITH_EXTI
 //--- End of Defines for Configuration --------------------------
 
 // Private Types Constants and Macros ------------------------------------------
@@ -83,8 +83,8 @@ void GPIO_Config (void)
         GPIOA_CLK_ON;
 
     temp = GPIOA->MODER;    //2 bits por pin
-    temp &= 0x3C0C0000;    //PA0 - PA5 output; PA6 - PA7 alternative
-    temp |= 0x0020A555;    //PA8 input exti; PA10 alternative; PA11 input; PA12 & PA15 input
+    temp &= 0xFFC30F3F;    //PA3 output; PA6 - PA7 alternative
+    temp |= 0x0028A040;    //PA9 - PA10 alternative
     GPIOA->MODER = temp;
 
     temp = GPIOA->OTYPER;    //1 bit por pin
@@ -93,13 +93,13 @@ void GPIO_Config (void)
     GPIOA->OTYPER = temp;
     
     temp = GPIOA->OSPEEDR;	//2 bits por pin
-    temp &= 0xFFFFF000;
+    temp &= 0xFFC30F3F;
     temp |= 0x00000000;		//low speed
     GPIOA->OSPEEDR = temp;
 
     temp = GPIOA->PUPDR;	//2 bits por pin
-    temp &= 0x3CFFFFFF;    //PA12 PA15 pullup
-    temp |= 0x42000000;
+    temp &= 0xFFFFFFFF;
+    temp |= 0x00000000;
     GPIOA->PUPDR = temp;
     
 #endif
@@ -111,8 +111,8 @@ void GPIO_Config (void)
         GPIOB_CLK_ON;
 
     temp = GPIOB->MODER;    //2 bits por pin
-    temp &= 0xFFFF0030;    //PB0 analog; PB1 - PB5 input; PB6 - PB7 output
-    temp |= 0x00005003;
+    temp &= 0xFFFFFFFC;    //PB0 output
+    temp |= 0x00000001;
     GPIOB->MODER = temp;
 
     temp = GPIOB->OTYPER;	//1 bit por pin
@@ -121,13 +121,13 @@ void GPIO_Config (void)
     GPIOB->OTYPER = temp;
 
     temp = GPIOB->OSPEEDR;	//2 bits por pin
-    temp &= 0xFFFF0FFF;
+    temp &= 0xFFFFFFFC;
     temp |= 0x00000000;		//low speed
     GPIOB->OSPEEDR = temp;
 
     temp = GPIOB->PUPDR;	//2 bits por pin
-    temp &= 0xFFFFF033;    //PB1 PB3 PB4 PB5 pullup
-    temp |= 0x00000544;
+    temp &= 0xFFFFFFFF;
+    temp |= 0x00000000;
     GPIOB->PUPDR = temp;
 
 #endif

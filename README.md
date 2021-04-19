@@ -1,6 +1,5 @@
-# 2Ch Control Board
+# 850-633 Control Board
 micro STM32F030K6T6
-LCD and tact switches
 
 Before start check uc selection and the configuration
 -----------------------------------------------------

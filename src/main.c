@@ -1,12 +1,12 @@
-//------------------------------------------------
-// #### DEXEL 2CH PROJECT - Custom Board ####
+//----------------------------------------------------
+// #### GAUSS 850-633nm Controller - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### MAIN.C ###################################
-//------------------------------------------------
+// #### MAIN.C #######################################
+//----------------------------------------------------
 
 // Includes --------------------------------------------------------------------
 #include "hard.h"
@@ -16,15 +16,12 @@
 #include "core_cm0.h"
 #include "tim.h"
 #include "flash_program.h"
+#include "dsp.h"
 
 #include "switches_answers.h"
-#include "lcd.h"
-#include "lcd_utils.h"
 #include "test_functions.h"
 #include "parameters.h"
-#include "dmx_receiver.h"
 #include "temperatures.h"
-#include "dsp.h"
 #include "pwm.h"
 
 #include "uart.h"
@@ -52,11 +49,6 @@ parameters_typedef * pflash_mem = (parameters_typedef *) (unsigned int *) FLASH_
 parameters_typedef mem_conf;    //in ram
 volatile unsigned char usart1_have_data = 0;
 
-// for the dmx
-volatile unsigned char dmx_buff_data[SIZEOF_DMX_BUFFER_DATA];
-volatile unsigned char Packet_Detected_Flag = 0;
-volatile unsigned short DMX_channel_selected = 0;
-volatile unsigned char DMX_channel_quantity = 0;
 
 // Globals ---------------------------------------------------------------------
 //-- Timers globals ----------------------------------
@@ -100,241 +92,233 @@ int main(void)
         SysTickError();
 
     // Begin Hardware Tests - check test_functions module
-    TF_Led();    //simple led functionality
-    // TF_SW_UP();
-    // TF_SW_DWN();
-    // TF_SW_SEL();    
-    // TF_lcdE();
-    // TF_lcdRS();
-    // TF_lcdData();
-    // TF_lcdBklight();
-    // TF_lcdBlink();
-    // TF_lcdScroll();
-    TF_Dmx_Packet ();
-    // TF_MenuFunction();
-// #ifdef WITH_EXTI    
-//     TF_zcd_by_int();
-// #endif
+    // TF_Led();    //simple led functionality
+    // TF_Led_Blinking ();
+    // TF_Ctrl_Fan ();
+    // TF_Usart1_Tx_Single ();
+    TF_Tim3_Channels ();
+    
+
     // End Hard Tests -------------------------------
 
     
     // Production Program ---------------------------
-    sw_actions_t action = selection_none;
-    resp_t resp = resp_continue;
-    unsigned char ch_values [2] = { 0 };
-    main_state_e main_state = MAIN_INIT;
+//     sw_actions_t action = selection_none;
+//     resp_t resp = resp_continue;
+//     unsigned char ch_values [2] = { 0 };
+//     main_state_e main_state = MAIN_INIT;
     
-    while (1)
-    {
-        switch (main_state)
-        {
-        case MAIN_INIT:
-            // get saved config or create one for default
-            if (pflash_mem->program_type != 0xff)
-            {
-                //memory with valid data
-                memcpy(&mem_conf, pflash_mem, sizeof(parameters_typedef));
-            }
-            else
-            {
-                //hardware defaults
-                mem_conf.temp_prot = TEMP_IN_70;    //70 degrees
-                mem_conf.max_current_channels[0] = 255;
-                mem_conf.max_current_channels[1] = 255;
-                mem_conf.dmx_channel_quantity = 2;
-            }
+//     while (1)
+//     {
+//         switch (main_state)
+//         {
+//         case MAIN_INIT:
+//             // get saved config or create one for default
+//             if (pflash_mem->program_type != 0xff)
+//             {
+//                 //memory with valid data
+//                 memcpy(&mem_conf, pflash_mem, sizeof(parameters_typedef));
+//             }
+//             else
+//             {
+//                 //hardware defaults
+//                 mem_conf.temp_prot = TEMP_IN_70;    //70 degrees
+//                 mem_conf.max_current_channels[0] = 255;
+//                 mem_conf.max_current_channels[1] = 255;
+//                 mem_conf.dmx_channel_quantity = 2;
+//             }
 
-            main_state++;
-            break;
-
-        case MAIN_HARD_INIT:
-
-            //reseteo hardware
-            DMX_DisableRx();
-
-            //reseteo canales
-            PWMChannelsReset();
-
-            //limpio los filtros
-            UpdateFiltersTest_Reset();
-
-            main_state++;            
-            break;
-
-        case MAIN_CHECK_CONF:
-
-            if (mem_conf.program_type == DMX_MODE)
-            {
-                //reception variables
-                Packet_Detected_Flag = 0;
-                DMX_channel_selected = mem_conf.dmx_first_channel;
-                DMX_channel_quantity = mem_conf.dmx_channel_quantity;
-
-                // //Mode Timeout enable
-                // ptFTT = &DMX1Mode_UpdateTimers;
-
-                //packet reception enable
-                DMX_EnableRx();
-
-#ifdef CHECK_FILTERS_BY_INT
-                //habilito salidas si estoy con int
-                enable_outputs_by_int = 1;
-#endif
-                
-                DMXModeReset();
-                main_state = MAIN_IN_DMX_MODE;
-            }
-
-            if (mem_conf.program_type == MANUAL_MODE)
-            {
-                //habilito salidas si estoy con int
-                enable_outputs_by_int = 1;
-
-                // //Mode Timeout enable
-                // ptFTT = &ManualMode_UpdateTimers;
-                
-                ManualModeReset();
-                
-                main_state = MAIN_IN_MANUAL_MODE;
-            }
-            break;
-
-        case MAIN_IN_DMX_MODE:
-            // Check encoder first
-            action = CheckActions();
-            
-            resp = DMXMode (ch_values, action);
-
-            if (resp == resp_change)
-            {
-                for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
-                    channels_values_int[n] = ch_values[n];
-            }
-
-            if (resp == resp_need_to_save)
-            {
-                need_to_save_timer = 10000;
-                need_to_save = 1;
-            }
-
-            // if (CheckSET() > SW_MIN)
-            //     main_state = MAIN_ENTERING_MAIN_MENU;
-            
-            break;
-
-        case MAIN_IN_MANUAL_MODE:
-            // Check encoder first
-            action = CheckActions();
-
-            resp = ManualMode (&mem_conf, action);
-
-            if ((resp == resp_change) ||
-                (resp == resp_change_all_up))    //fixed mode save and change
-            {
-                for (unsigned char n = 0; n < sizeof(ch_values); n++)
-                    ch_values[n] = mem_conf.fixed_channels[n];
-
-                for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
-                    channels_values_int[n] = ch_values[n];
-
-                if (resp == resp_change_all_up)
-                    resp = resp_need_to_save;
-            }
-
-            if (resp == resp_need_to_save)
-            {
-                need_to_save_timer = 10000;
-                need_to_save = 1;
-            }
-
-            // if (CheckSET() > SW_MIN)
-            //     main_state = MAIN_ENTERING_MAIN_MENU;
-
-            break;
-
-        case MAIN_IN_OVERTEMP:
-            // main_state = MAIN_IN_OVERTEMP_B;
-            break;
-
-        // case MAIN_IN_OVERTEMP_B:
-        //     if (CheckTempReconnect (Temp_Channel, mem_conf.temp_prot))
-        //     {
-        //         //reconnect
-        //         main_state = MAIN_HARDWARE_INIT;
-        //     }
-        //     break;
-            
-//         case MAIN_ENTERING_MAIN_MENU:
-//             //deshabilitar salidas hardware
-//             DMX_DisableRx();
-
-// #ifdef CHECK_FILTERS_BY_INT
-//             enable_outputs_by_int = 0;
-//             for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
-//                 channels_values_int[n] = 0;
-            
-// #endif
-//             //reseteo canales
-//             PWMChannelsReset();
-
-//             MainMenuReset();
-            
 //             main_state++;
 //             break;
 
-//         case MAIN_ENTERING_MAIN_MENU_WAIT_FREE:
-//             if (CheckSET() == SW_NO)
+//         case MAIN_HARD_INIT:
+
+//             //reseteo hardware
+//             DMX_DisableRx();
+
+//             //reseteo canales
+//             PWMChannelsReset();
+
+//             //limpio los filtros
+//             UpdateFiltersTest_Reset();
+
+//             main_state++;            
+//             break;
+
+//         case MAIN_CHECK_CONF:
+
+//             if (mem_conf.program_type == DMX_MODE)
 //             {
-//                 main_state++;
+//                 //reception variables
+//                 Packet_Detected_Flag = 0;
+//                 DMX_channel_selected = mem_conf.dmx_first_channel;
+//                 DMX_channel_quantity = mem_conf.dmx_channel_quantity;
+
+//                 // //Mode Timeout enable
+//                 // ptFTT = &DMX1Mode_UpdateTimers;
+
+//                 //packet reception enable
+//                 DMX_EnableRx();
+
+// #ifdef CHECK_FILTERS_BY_INT
+//                 //habilito salidas si estoy con int
+//                 enable_outputs_by_int = 1;
+// #endif
+                
+//                 DMXModeReset();
+//                 main_state = MAIN_IN_DMX_MODE;
+//             }
+
+//             if (mem_conf.program_type == MANUAL_MODE)
+//             {
+//                 //habilito salidas si estoy con int
+//                 enable_outputs_by_int = 1;
+
+//                 // //Mode Timeout enable
+//                 // ptFTT = &ManualMode_UpdateTimers;
+                
+//                 ManualModeReset();
+                
+//                 main_state = MAIN_IN_MANUAL_MODE;
 //             }
 //             break;
+
+//         case MAIN_IN_DMX_MODE:
+//             // Check encoder first
+//             action = CheckActions();
             
-        case MAIN_IN_MAIN_MENU:
-            // Check encoder first
-            action = CheckActions();
+//             resp = DMXMode (ch_values, action);
 
-            resp = MainMenu(&mem_conf, action);
+//             if (resp == resp_change)
+//             {
+//                 for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+//                     channels_values_int[n] = ch_values[n];
+//             }
 
-            if (resp == resp_need_to_save)
-            {
-#ifdef SAVE_FLASH_IMMEDIATE
-                need_to_save_timer = 0;
-#endif
-#ifdef SAVE_FLASH_WITH_TIMEOUT
-                need_to_save_timer = 10000;
-#endif
-                need_to_save = 1;
-                main_state = MAIN_HARD_INIT;
-            }
+//             if (resp == resp_need_to_save)
+//             {
+//                 need_to_save_timer = 10000;
+//                 need_to_save = 1;
+//             }
+
+//             // if (CheckSET() > SW_MIN)
+//             //     main_state = MAIN_ENTERING_MAIN_MENU;
             
-            if (resp == resp_finish)
-                main_state = MAIN_HARD_INIT;
+//             break;
 
-            // if (CheckSET() > SW_HALF)
-            //     main_state = MAIN_ENTERING_HARDWARE_MENU;
+//         case MAIN_IN_MANUAL_MODE:
+//             // Check encoder first
+//             action = CheckActions();
+
+//             resp = ManualMode (&mem_conf, action);
+
+//             if ((resp == resp_change) ||
+//                 (resp == resp_change_all_up))    //fixed mode save and change
+//             {
+//                 for (unsigned char n = 0; n < sizeof(ch_values); n++)
+//                     ch_values[n] = mem_conf.fixed_channels[n];
+
+//                 for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+//                     channels_values_int[n] = ch_values[n];
+
+//                 if (resp == resp_change_all_up)
+//                     resp = resp_need_to_save;
+//             }
+
+//             if (resp == resp_need_to_save)
+//             {
+//                 need_to_save_timer = 10000;
+//                 need_to_save = 1;
+//             }
+
+//             // if (CheckSET() > SW_MIN)
+//             //     main_state = MAIN_ENTERING_MAIN_MENU;
+
+//             break;
+
+//         case MAIN_IN_OVERTEMP:
+//             // main_state = MAIN_IN_OVERTEMP_B;
+//             break;
+
+//         // case MAIN_IN_OVERTEMP_B:
+//         //     if (CheckTempReconnect (Temp_Channel, mem_conf.temp_prot))
+//         //     {
+//         //         //reconnect
+//         //         main_state = MAIN_HARDWARE_INIT;
+//         //     }
+//         //     break;
             
-            break;
+// //         case MAIN_ENTERING_MAIN_MENU:
+// //             //deshabilitar salidas hardware
+// //             DMX_DisableRx();
 
-        default:
-            main_state = MAIN_INIT;
-            break;
-        }
+// // #ifdef CHECK_FILTERS_BY_INT
+// //             enable_outputs_by_int = 0;
+// //             for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+// //                 channels_values_int[n] = 0;
+            
+// // #endif
+// //             //reseteo canales
+// //             PWMChannelsReset();
 
-        // memory savings after config
-        if ((need_to_save) && (!need_to_save_timer))
-        {
-            __disable_irq();
-            need_to_save = WriteConfigurations();
-            __enable_irq();
+// //             MainMenuReset();
+            
+// //             main_state++;
+// //             break;
+
+// //         case MAIN_ENTERING_MAIN_MENU_WAIT_FREE:
+// //             if (CheckSET() == SW_NO)
+// //             {
+// //                 main_state++;
+// //             }
+// //             break;
+            
+//         case MAIN_IN_MAIN_MENU:
+//             // Check encoder first
+//             action = CheckActions();
+
+//             resp = MainMenu(&mem_conf, action);
+
+//             if (resp == resp_need_to_save)
+//             {
+// #ifdef SAVE_FLASH_IMMEDIATE
+//                 need_to_save_timer = 0;
+// #endif
+// #ifdef SAVE_FLASH_WITH_TIMEOUT
+//                 need_to_save_timer = 10000;
+// #endif
+//                 need_to_save = 1;
+//                 main_state = MAIN_HARD_INIT;
+//             }
+            
+//             if (resp == resp_finish)
+//                 main_state = MAIN_HARD_INIT;
+
+//             // if (CheckSET() > SW_HALF)
+//             //     main_state = MAIN_ENTERING_HARDWARE_MENU;
+            
+//             break;
+
+//         default:
+//             main_state = MAIN_INIT;
+//             break;
+//         }
+
+//         // memory savings after config
+//         if ((need_to_save) && (!need_to_save_timer))
+//         {
+//             __disable_irq();
+//             need_to_save = WriteConfigurations();
+//             __enable_irq();
 
 
-            need_to_save = 0;
-        }
+//             need_to_save = 0;
+//         }
 
-        //the things that not depends on the main status
-        UpdateSwitches();
+//         //the things that not depends on the main status
+//         UpdateSwitches();
         
-    }    //end of while 1
+//     }    //end of while 1
 
     return 0;
 }
@@ -342,72 +326,72 @@ int main(void)
 //--- End of Main ---//
 
 
-typedef enum {
-    FILTERS_BKP_CHANNELS,
-    FILTERS_LIMIT_EACH_CHANNEL,
-    FILTERS_OUTPUTS,
-    FILTERS_DUMMY1,
-    FILTERS_DUMMY2
+// typedef enum {
+//     FILTERS_BKP_CHANNELS,
+//     FILTERS_LIMIT_EACH_CHANNEL,
+//     FILTERS_OUTPUTS,
+//     FILTERS_DUMMY1,
+//     FILTERS_DUMMY2
     
-} filters_and_offsets_e;
+// } filters_and_offsets_e;
 
-filters_and_offsets_e filters_sm = FILTERS_BKP_CHANNELS;
-unsigned char limit_output [2] = { 0 };
-void CheckFiltersAndOffsets_SM (volatile unsigned char * ch_dmx_val)
-{
-    unsigned short calc = 0;    
+// filters_and_offsets_e filters_sm = FILTERS_BKP_CHANNELS;
+// unsigned char limit_output [2] = { 0 };
+// void CheckFiltersAndOffsets_SM (volatile unsigned char * ch_dmx_val)
+// {
+//     unsigned short calc = 0;    
     
-    switch (filters_sm)
-    {
-    case FILTERS_BKP_CHANNELS:
-        limit_output[0] = *(ch_dmx_val + 0);
-        limit_output[1] = *(ch_dmx_val + 1);
-        filters_sm++;
-        break;
+//     switch (filters_sm)
+//     {
+//     case FILTERS_BKP_CHANNELS:
+//         limit_output[0] = *(ch_dmx_val + 0);
+//         limit_output[1] = *(ch_dmx_val + 1);
+//         filters_sm++;
+//         break;
 
-    case FILTERS_LIMIT_EACH_CHANNEL:
-        calc = limit_output[0] * mem_conf.max_current_channels[0];
-        calc >>= 8;
-        limit_output[0] = (unsigned char) calc;
+//     case FILTERS_LIMIT_EACH_CHANNEL:
+//         calc = limit_output[0] * mem_conf.max_current_channels[0];
+//         calc >>= 8;
+//         limit_output[0] = (unsigned char) calc;
 
-        calc = limit_output[1] * mem_conf.max_current_channels[1];
-        calc >>= 8;
-        limit_output[1] = (unsigned char) calc;
+//         calc = limit_output[1] * mem_conf.max_current_channels[1];
+//         calc >>= 8;
+//         limit_output[1] = (unsigned char) calc;
 
-        filters_sm++;
-        break;
+//         filters_sm++;
+//         break;
 
-    case FILTERS_OUTPUTS:
-        // channel 1
-        ch1_pwm = MA16_U16Circular (
-            &st_sp1,
-            PWM_Map_From_Dmx(*(limit_output + CH1_VAL_OFFSET))
-            );
-        PWM_Update_CH1(ch1_pwm);
+//     case FILTERS_OUTPUTS:
+//         // channel 1
+//         ch1_pwm = MA16_U16Circular (
+//             &st_sp1,
+//             PWM_Map_From_Dmx(*(limit_output + CH1_VAL_OFFSET))
+//             );
+//         PWM_Update_CH1(ch1_pwm);
 
-        // channel 2
-        ch2_pwm = MA16_U16Circular (
-            &st_sp2,
-            PWM_Map_From_Dmx(*(limit_output + CH2_VAL_OFFSET))
-            );
-        PWM_Update_CH2(ch2_pwm);
+//         // channel 2
+//         ch2_pwm = MA16_U16Circular (
+//             &st_sp2,
+//             PWM_Map_From_Dmx(*(limit_output + CH2_VAL_OFFSET))
+//             );
+//         PWM_Update_CH2(ch2_pwm);
 
-        filters_sm++;
-        break;
+//         filters_sm++;
+//         break;
         
-    case FILTERS_DUMMY1:
-        filters_sm++;
-        break;
+//     case FILTERS_DUMMY1:
+//         filters_sm++;
+//         break;
 
-    case FILTERS_DUMMY2:
-        filters_sm = FILTERS_BKP_CHANNELS;
-        break;
+//     case FILTERS_DUMMY2:
+//         filters_sm = FILTERS_BKP_CHANNELS;
+//         break;
         
-    default:
-        filters_sm = FILTERS_BKP_CHANNELS;
-        break;
-    }
-}
+//     default:
+//         filters_sm = FILTERS_BKP_CHANNELS;
+//         break;
+//     }
+// }
 
 
 void UpdateFiltersTest_Reset (void)
@@ -425,15 +409,8 @@ void TimingDelay_Decrement(void)
     if (timer_standby)
         timer_standby--;
 
-    LCD_UpdateTimer();
-
     HARD_Timeouts();
 
-    DMX_Int_Millis_Handler();
-
-    if (enable_outputs_by_int)    
-        CheckFiltersAndOffsets_SM(channels_values_int);
-    
 }
 
 
