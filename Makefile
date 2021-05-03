@@ -83,6 +83,7 @@ SRC += ./src/uart.c
 # SRC += ./src/flash_program.c
 SRC += ./src/test_functions.c
 SRC += ./src/pwm.c
+SRC += ./src/comm.c
 
 
 
@@ -210,12 +211,23 @@ tests:
 	gcc src/tests.c
 	./a.out
 
-tests_dmx:
+tests_signals:
 	# first compile common modules (modules to test and dependencies)
-	gcc -c src/dmx_receiver.c -I. $(INCDIR) -DSTM32F030
+	gcc -c src/signals.c -I. $(INCDIR)
 	# second auxiliary helper modules
 	gcc -c src/tests_ok.c -I $(INCDIR)
-	gcc src/tests_dmx.c dmx_receiver.o tests_ok.o
+	gcc src/tests_signals.c signals.o tests_ok.o
+	./a.out
+
+tests_comm:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/comm.c -I. $(INCDIR) -DSTM32F030
+	gcc -c src/signals.c -I. $(INCDIR)
+	gcc -c src/utils.c -I. $(INCDIR)
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	gcc -c src/tests_mock_usart.c -I $(INCDIR)
+	gcc src/tests_comm.c comm.o signals.o utils.o tests_ok.o tests_mock_usart.o
 	./a.out
 
 tests_lcd_menues:

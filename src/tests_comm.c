@@ -8,34 +8,34 @@
 //---------------------------------------------
 
 // Includes Modules for tests --------------------------------------------------
-#include "dmx_receiver.h"
+#include "comm.h"
+#include "signals.h"
+
+//helper modules
 #include "tests_ok.h"
+#include "tests_mock_usart.h"
 
 #include <stdio.h>
-// #include <stdlib.h>
 #include <string.h>
 
 
 // Externals -------------------------------------------------------------------
-
+extern treatment_params_t treatment_data;
 
 // Globals ---------------------------------------------------------------------
-unsigned char usart1_have_data = 0;
-char new_uart_msg [200] = { 0 };
-char last_uart_sended [200] = { 0 };
-int exti_is_on = 0;
-
 
 
 // Module Auxialiary Functions -------------------------------------------------
-void Usart1Send (char * msg);
-unsigned char Usart1ReadBuffer (unsigned char * bout, unsigned short max_len);
-void EXTIOn (void);
-void EXTIOff (void);
 
 
 // Module Functions for testing ------------------------------------------------
+void Test_Own_Channel (void);
 void Test_Comms (void);
+void Test_Signals_Conf (void);
+void Test_Frequency_Conf (void);
+void Test_PowerRed_Conf (void);
+void Test_PowerIRed_Conf (void);
+void Test_HardSoft (void);
     
 
 // Module Functions ------------------------------------------------------------
@@ -44,67 +44,297 @@ void Test_Comms (void);
 int main(int argc, char *argv[])
 {
 
-    Test_Comms ();
+    Test_Own_Channel ();
+    Test_Signals_Conf ();
+    Test_Frequency_Conf ();
+    Test_PowerRed_Conf ();
+    Test_PowerIRed_Conf ();
+    Test_HardSoft ();
     
 }
 
 
-// give externals inputs to the module
-volatile unsigned char dmx_buff_data[3] = { 0 };
-volatile unsigned char Packet_Detected_Flag = 0;
-volatile unsigned short DMX_channel_selected = 1;
-volatile unsigned char DMX_channel_quantity = 2;
-// get globals from module
-extern unsigned char dmx_receive_flag;
-
-void Test_Comms (void)
+void Test_Own_Channel (void)
 {
-    // Test receiver routine
-    dmx_receive_flag = 1;
-    for (int i = 0; i < 512; i++)
-    {
-        DMX_Int_Serial_Receiver_Handler((unsigned char) i);
-    }
+    char * my_channel;
 
-    printf("ch: %d buff: [%d] [%d] [%d]\n",
-           DMX_channel_selected,
-           dmx_buff_data[0],
-           dmx_buff_data[1],
-           dmx_buff_data[2]);
-           
-    
-}
-
-
-unsigned char Usart1ReadBuffer (unsigned char * bout, unsigned short max_len)
-{
-    unsigned char len = 0;
-    len = strlen(new_uart_msg);
-    if (max_len > len)
-        strcpy(bout, new_uart_msg);
+    printf("Set own channel 0 -> 1: ");
+    COMM_SetOwnChannel(0);
+    my_channel = COMM_GetOwnChannel();
+    if (strncmp(my_channel, "ch1", sizeof("ch1") - 1) == 0)
+        PrintOK();
     else
-        printf("error on Usart1ReadBuffer max_len\n");
+        PrintERR();
 
-    return len;
+    printf("Set own channel 6 -> 1: ");    
+    COMM_SetOwnChannel(6);
+    my_channel = COMM_GetOwnChannel();
+    if (strncmp(my_channel, "ch1", sizeof("ch1") - 1) == 0)
+        PrintOK();
+    else
+        PrintERR();
+
+    printf("Set own channel 1: ");    
+    COMM_SetOwnChannel(1);
+    my_channel = COMM_GetOwnChannel();
+    if (strncmp(my_channel, "ch1", sizeof("ch1") - 1) == 0)
+        PrintOK();
+    else
+        PrintERR();
+
+    printf("Set own channel 2: ");    
+    COMM_SetOwnChannel(2);
+    my_channel = COMM_GetOwnChannel();
+    if (strncmp(my_channel, "ch2", sizeof("ch2") - 1) == 0)
+        PrintOK();
+    else
+        PrintERR();
+
+    printf("Set own channel 3: ");    
+    COMM_SetOwnChannel(3);
+    my_channel = COMM_GetOwnChannel();
+    if (strncmp(my_channel, "ch3", sizeof("ch3") - 1) == 0)
+        PrintOK();
+    else
+        PrintERR();
+
+    printf("Set own channel 4: ");    
+    COMM_SetOwnChannel(4);
+    my_channel = COMM_GetOwnChannel();
+    if (strncmp(my_channel, "ch4", sizeof("ch4") - 1) == 0)
+        PrintOK();
+    else
+        PrintERR();
+
+    printf("Set own channel 5: ");    
+    COMM_SetOwnChannel(5);
+    my_channel = COMM_GetOwnChannel();
+    if (strncmp(my_channel, "ch5", sizeof("ch5") - 1) == 0)
+        PrintOK();
+    else
+        PrintERR();
+    
 }
 
 
-void Usart1Send (char * msg)
+void Test_Signals_Conf (void)
 {
-    strcpy(last_uart_sended, msg);
+    printf ("\nStart of comms tests on ch1...\n");
+    COMM_SetOwnChannel(1);
+    
+    Usart1FillRxBuffer("ch1 signal cwave\n");
+    COMM_UpdateCommunications();
+
+    printf("Signal set cwave: ");
+    if (treatment_data.signal == CWAVE_SIGNAL)
+        PrintOK();
+    else
+        PrintERR();
+
+    
+    Usart1FillRxBuffer("ch1 signal triangular\n");
+    COMM_UpdateCommunications();
+
+    printf("Signal set triangular: ");
+    if (treatment_data.signal == TRIANGULAR_SIGNAL)
+        PrintOK();
+    else
+        PrintERR();
+
+    
+    Usart1FillRxBuffer("ch1 signal pulsed\n");
+    COMM_UpdateCommunications();
+
+    printf("Signal set pulsed: ");
+    if (treatment_data.signal == PULSED_SIGNAL)
+        PrintOK();
+    else
+        PrintERR();
+    
 }
 
 
-void EXTIOn (void)
+void Test_Frequency_Conf (void)
 {
-    exti_is_on = 1;
+    printf ("\nStart of comms tests on ch2...\n");
+    COMM_SetOwnChannel(2);
+
+    treatment_data.frequency = 0xff;
+    Usart1FillRxBuffer("ch2 frequency 1\n");
+    COMM_UpdateCommunications();
+    
+    printf("Frequency set 1: ");
+    if (treatment_data.frequency == 1)
+        PrintOK();
+    else
+        PrintERR();
+
+    treatment_data.frequency = 0xff;    
+    Usart1FillRxBuffer("ch2 frequency 0\n");
+    COMM_UpdateCommunications();
+
+    printf("Frequency set 0: ");
+    if (treatment_data.frequency == 0xff)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    treatment_data.frequency = 0xff;    
+    Usart1FillRxBuffer("ch2 frequency 10\n");
+    COMM_UpdateCommunications();
+
+    printf("Frequency set 10: ");
+    if (treatment_data.frequency == 10)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    treatment_data.frequency = 0xff;    
+    Usart1FillRxBuffer("ch2 frequency 25\n");
+    COMM_UpdateCommunications();
+
+    printf("Frequency set 25: ");
+    if (treatment_data.frequency == 0xff)
+        PrintOK();
+    else
+        PrintERR();
+    
 }
 
 
-void EXTIOff (void)
+void Test_PowerRed_Conf (void)
 {
-    exti_is_on = 0;
+    printf ("\nStart of comms tests on ch3...\n");
+    COMM_SetOwnChannel(3);
+
+    treatment_data.power_red = 0xff;
+    Usart1FillRxBuffer("ch3 power red 0\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerRed set 0: ");
+    if (treatment_data.power_red == 0xff)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    treatment_data.power_red = 0xff;
+    Usart1FillRxBuffer("ch3 power red 10\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerRed set 10: ");
+    if (treatment_data.power_red == 10)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    treatment_data.power_red = 0xff;
+    Usart1FillRxBuffer("ch3 power red 000\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerRed set 000: ");
+    if (treatment_data.power_red == 10)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    treatment_data.power_red = 0xff;
+    Usart1FillRxBuffer("ch3 power red 100\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerRed set 100: ");
+    if (treatment_data.power_red == 100)
+        PrintOK();
+    else
+        PrintERR();
+
+    treatment_data.power_red = 0xff;
+    Usart1FillRxBuffer("ch3 power red 255\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerRed set 255: ");
+    if (treatment_data.power_red == 100)
+        PrintOK();
+    else
+        PrintERR();
+    
 }
+
+
+void Test_PowerIRed_Conf (void)
+{
+    printf ("\nStart of comms tests on ch4...\n");
+    COMM_SetOwnChannel(4);
+
+    treatment_data.power_ired = 0xff;
+    Usart1FillRxBuffer("ch4 power ired 0\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerIred set 0: ");
+    if (treatment_data.power_ired == 0xff)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    treatment_data.power_ired = 0xff;
+    Usart1FillRxBuffer("ch4 power ired 10\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerIred set 10: ");
+    if (treatment_data.power_ired == 10)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    treatment_data.power_ired = 0xff;
+    Usart1FillRxBuffer("ch4 power ired 000\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerIred set 000: ");
+    if (treatment_data.power_ired == 10)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    treatment_data.power_ired = 0xff;
+    Usart1FillRxBuffer("ch4 power ired 100\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerIred set 100: ");
+    if (treatment_data.power_ired == 100)
+        PrintOK();
+    else
+        PrintERR();
+
+    treatment_data.power_ired = 0xff;
+    Usart1FillRxBuffer("ch4 power ired 255\n");
+    COMM_UpdateCommunications();
+    
+    printf("PowerIred set 255: ");
+    if (treatment_data.power_ired == 100)
+        PrintOK();
+    else
+        PrintERR();
+    
+}
+
+
+void Test_HardSoft (void)
+{
+    printf("Ask for hard soft on ch5\n");
+    COMM_SetOwnChannel(5);
+
+    Usart1FillRxBuffer("ch5 hard soft\n");
+    COMM_UpdateCommunications();    
+}
+
 
 
 //--- end of file ---//

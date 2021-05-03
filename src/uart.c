@@ -46,21 +46,14 @@ unsigned char Usart1ReadBuffer (unsigned char * bout, unsigned short max_len)
     len = prx1 - rx1buff;
 
     if (len < max_len)
-    {
-        //el prx1 siempre llega adelantado desde la int, lo corto con un 0
-        *prx1 = '\0';
-        len += 1;
-        memcpy(bout, (unsigned char *) rx1buff, len);
-    }
+        len += 1;    //space for '\0' from int
     else
-    {
-        memcpy(bout, (unsigned char *) rx1buff, len);
         len = max_len;
-    }
 
-    //ajusto punteros de rx luego de la copia
+    memcpy(bout, (unsigned char *) rx1buff, len);
+
+    //pointer adjust after copy
     prx1 = rx1buff;
-
     return (unsigned char) len;
 }
 
@@ -127,6 +120,7 @@ void Usart1Send (char * send)
     Usart1SendUnsigned((unsigned char *) send, i);
 }
 
+
 void Usart1SendUnsigned(unsigned char * send, unsigned char size)
 {
     if ((ptx1_pckt_index + size) < &tx1buff[SIZEOF_TXDATA])
@@ -136,6 +130,7 @@ void Usart1SendUnsigned(unsigned char * send, unsigned char size)
         USART1->CR1 |= USART_CR1_TXEIE;
     }
 }
+
 
 void Usart1SendSingle(unsigned char tosend)
 {

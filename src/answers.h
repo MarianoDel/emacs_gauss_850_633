@@ -4,25 +4,13 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### SWITCHES_ANSWERS.H ####################
+// #### ANSWERS.H #############################
 //---------------------------------------------
 
-#ifndef _SWITCHES_ANSWERS_H_
-#define _SWITCHES_ANSWERS_H_
+#ifndef _ANSWERS_H_
+#define _ANSWERS_H_
 
 // Exported Types Constants and Macros -----------------------------------------
-
-// Switches actions
-typedef enum {
-    selection_none = 0,
-    selection_up,
-    selection_dwn,
-    selection_enter,
-    selection_back
-
-} sw_actions_t;
-
-
 typedef enum {
     resp_ok = 0,
     resp_continue,
@@ -42,14 +30,6 @@ typedef enum {
 } resp_t;
 
 
-typedef enum {
-    SW_NO = 0,
-    SW_MIN,
-    SW_HALF,
-    SW_FULL
-    
-} resp_sw_t;
-
-#endif /* _SWITCHES_ANSWERS_H_ */
+#endif /* _ANSWERS_H_ */
 
 //--- end of file ---//

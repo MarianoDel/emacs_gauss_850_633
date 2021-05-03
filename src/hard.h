@@ -26,6 +26,21 @@
 
 
 //---- End of Features Configuration ----------
+#ifdef HARDWARE_VERSION_1_0
+#define HARD "Hardware Version: 1.0"
+#endif
+#ifdef HARDWARE_VERSION_1_1
+#define HARD "Hardware Version: 1.1"
+#endif
+#ifdef SOFTWARE_VERSION_1_0
+#define SOFT "Software Version: 1.0"
+#endif
+#ifdef SOFTWARE_VERSION_1_1
+#define SOFT "Software Version: 1.1"
+#endif
+#ifdef SOFTWARE_VERSION_1_2
+#define SOFT "Software Version: 1.2"
+#endif
 
 
 // Exported Pinout Names -------------------------------------------------------
