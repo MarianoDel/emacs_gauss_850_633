@@ -219,6 +219,14 @@ tests_signals:
 	gcc src/tests_signals.c signals.o tests_ok.o
 	./a.out
 
+tests_treatment:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/treatment.c -I. $(INCDIR) -DSTM32F030
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	gcc src/tests_treatment.c treatment.o tests_ok.o
+	./a.out
+
 tests_comm:
 	# first compile common modules (modules to test and dependencies)
 	gcc -c src/comm.c -I. $(INCDIR) -DSTM32F030

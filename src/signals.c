@@ -23,8 +23,6 @@
 
 
 // Private Types Constants and Macros ------------------------------------------
-#define MIN_FREQ_ALLOWED    1
-#define MAX_FREQ_ALLOWED    10
 
 // Externals -------------------------------------------------------------------
 
@@ -114,6 +112,13 @@ resp_t SetPowerIRed (unsigned char a)
         treatment_data.power_ired = a;
 
     return resp_ok;
+}
+
+
+void Signal_StopAll (void)
+{
+    PWM_Update_R(0);
+    PWM_Update_IR(0);
 }
 
 // void TreatmentManager (void)
