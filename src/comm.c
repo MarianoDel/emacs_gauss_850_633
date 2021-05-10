@@ -12,6 +12,8 @@
 #include "signals.h"
 #include "answers.h"
 #include "uart.h"
+#include "tim.h"
+#include "treatment.h"
 
 #include "hard.h"    //for hard soft
 
@@ -211,22 +213,16 @@ void COMM_ProcessMsg (void)
         }
         
         // //-- Start Treatment
-        // else if (strncmp(pStr, s_start_treatment, sizeof(s_start_treatment) - 1) == 0)
-        // {
-        //     //se puede empezar
-        //     if (GetTreatmentState() == TREATMENT_STANDBY)
-        //     {
-        //         resp = StartTreatment();
-        //     }
-        //     else
-        //         resp = resp_error;
-        // }
+        else if (strncmp(pStr, s_start_treatment, sizeof(s_start_treatment) - 1) == 0)
+        {
+            resp = TreatmentStart();
+        }
 
         // //-- Stop Treatment
-        // else if (strncmp(pStr, s_stop_treatment, sizeof(s_stop_treatment) - 1) == 0)
-        // {
-        //     StopTreatment();
-        // }
+        else if (strncmp(pStr, s_stop_treatment, sizeof(s_stop_treatment) - 1) == 0)
+        {
+            TreatmentStop();
+        }
 
         //-- Soft Version
         else if (!strncmp(pStr, "hard soft", sizeof("hard soft") - 1))
@@ -257,6 +253,7 @@ void COMM_ProcessMsg (void)
 
     if (!broadcast)
     {
+        Wait_ms(2);
         if (resp == resp_ok)
             Usart1Send("OK\n");
 
