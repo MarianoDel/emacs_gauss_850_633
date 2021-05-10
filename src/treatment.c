@@ -22,6 +22,7 @@ extern treatment_params_t treatment_data;
 
 // Globals ---------------------------------------------------------------------
 treatment_state_e treat_state;
+volatile unsigned short timer_treatment = 0;
 
 
 
@@ -86,12 +87,12 @@ void TreatmentManager (void)
         case TREATMENT_STOPPING:
             Signal_StopAll();
             
-            // timer_signals = 10;
+            timer_treatment = 1000;
             treat_state = TREATMENT_STOPPING2;
             break;
 
         case TREATMENT_STOPPING2:
-            // if (!timer_signals)
+            if (!timer_treatment)
                 treat_state = TREATMENT_INIT_FIRST_TIME;
 
             break;
@@ -157,4 +158,9 @@ resp_t TreatmentAssertParams (void)
 }
 
 
+void TREATMENT_Timeouts (void)
+{
+    if (timer_treatment)
+        timer_treatment--;
+}
 //--- end of file ---//

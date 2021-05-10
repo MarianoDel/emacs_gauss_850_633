@@ -115,7 +115,6 @@ void COMM_ProcessMsg (void)
     resp_t resp = resp_nok;
     unsigned char broadcast = 0;
     char * pStr = buffMessages;
-    char b [30];
 
     //broadcast or own channel
     if ((strncmp(pStr, p_own_channel, sizeof(s_chf) - 1) == 0) ||

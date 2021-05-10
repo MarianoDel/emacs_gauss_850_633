@@ -20,7 +20,7 @@
 
 // Externals -------------------------------------------------------------------
 treatment_params_t treatment_data;
-
+extern volatile unsigned short timer_treatment;
 
 // Globals ---------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ void Signal_StopAll (void);
 void ChangeLed (unsigned char a);
 void Signal_GenerateCWave_Reset (void);
 
-
+void Test_Treat_Loop (int * current_loop, int max_loops, int out_condition);
 // Module Functions for testing ------------------------------------------------
 void Test_Treatment_Functions (void);
 void Test_Treatment_Assert (void);
@@ -55,18 +55,12 @@ void Test_Treatment_Functions (void)
     resp_t resp = resp_nok;
 
     printf("Testing Treatment Reset\n");
-    do {
-        TreatmentManager();
-        printf("loop num: %d\n", loop);
-        loop++;
-    } while (TreatmentGetState() == TREATMENT_INIT_FIRST_TIME);
 
+    Test_Treat_Loop(&loop, 10, TREATMENT_STANDBY);
     TreatmentManager_Reset();
     printf("Treatment Reset: ");
     if (TreatmentGetState() == TREATMENT_INIT_FIRST_TIME)
-    {
         PrintOK();
-    }
     else
         PrintERR();
 
@@ -76,26 +70,15 @@ void Test_Treatment_Functions (void)
     treatment_data.frequency = 1;
     treatment_data.power_red = 10;
     treatment_data.power_ired = 10;    
-    
-    do {
-        TreatmentManager();
-        printf("loop num: %d\n", loop);
-        loop++;
-    } while (TreatmentGetState() == TREATMENT_INIT_FIRST_TIME);
 
+    TreatmentStop();
+    Test_Treat_Loop(&loop, 10, TREATMENT_STANDBY);
 
     TreatmentStart();
-    do {
-        TreatmentManager();
-        printf("loop num: %d\n", loop);
-        loop++;
-    } while (TreatmentGetState() != TREATMENT_GENERATING_CWAVE);
-
+    Test_Treat_Loop(&loop, 10, TREATMENT_GENERATING_CWAVE);
     printf("Treatment Generate CWave: ");
     if (TreatmentGetState() == TREATMENT_GENERATING_CWAVE)
-    {
         PrintOK();
-    }
     else
         PrintERR();
 
@@ -105,26 +88,33 @@ void Test_Treatment_Functions (void)
     treatment_data.frequency = 1;
     treatment_data.power_red = 10;
     treatment_data.power_ired = 10;    
+
+    TreatmentStop();
+    Test_Treat_Loop(&loop, 10, TREATMENT_STANDBY);
     
-    do {
-        TreatmentManager();
-        printf("loop num: %d\n", loop);
-        loop++;
-    } while (TreatmentGetState() == TREATMENT_INIT_FIRST_TIME);
-
-
     TreatmentStart();
-    do {
-        TreatmentManager();
-        printf("loop num: %d\n", loop);
-        loop++;
-    } while ((TreatmentGetState() != TREATMENT_GENERATING_PULSED);
-
+    Test_Treat_Loop(&loop, 10, TREATMENT_GENERATING_PULSED);    
     printf("Treatment Generate Pulsed: ");
     if (TreatmentGetState() == TREATMENT_GENERATING_PULSED)
-    {
         PrintOK();
-    }
+    else
+        PrintERR();
+
+
+    printf("Testing Treatment Start Triangular\n");
+    treatment_data.signal = TRIANGULAR_SIGNAL;
+    treatment_data.frequency = 1;
+    treatment_data.power_red = 10;
+    treatment_data.power_ired = 10;    
+
+    TreatmentStop();
+    Test_Treat_Loop(&loop, 10, TREATMENT_STANDBY);
+
+    TreatmentStart();
+    Test_Treat_Loop(&loop, 10, TREATMENT_GENERATING_TRIANGULAR);        
+    printf("Treatment Generate Triangular: ");
+    if (TreatmentGetState() == TREATMENT_GENERATING_TRIANGULAR)
+        PrintOK();
     else
         PrintERR();
     
@@ -205,6 +195,28 @@ void Test_Treatment_Assert (void)
 }    
 
 
+void Test_Treat_Loop (int * current_loop, int max_loops, int out_condition)
+{
+    int start_loop = *current_loop;
+
+    printf("loops start: %d\n", *current_loop);
+    do {
+        if (timer_treatment)
+            timer_treatment = 0;
+        
+        TreatmentManager();
+        printf("loop: %d\n", *current_loop);
+        (*current_loop)++;
+        if ((start_loop + max_loops) < *current_loop)
+        {
+            printf("\nquitting loops abnormal cond.!\n");
+            break;
+        }
+    } while (TreatmentGetState() != out_condition);
+    
+}
+
+
 void Signal_StopAll (void)
 {
     printf("stopping all pwms\n");
@@ -213,8 +225,34 @@ void Signal_StopAll (void)
 
 void ChangeLed (unsigned char a)
 {
-    printf("Led on %d state\n", a);
+    switch (a)
+    {
+    case 0:
+        printf("Led on %d state %s\n", a, "LED_NO_BLINKING");
+        break;
+
+    case 1:
+        printf("Led on %d state %s\n", a, "LED_TREATMENT_STANDBY");        
+        break;
+
+    case 2:
+        printf("Led on %d state %s\n", a, "LED_TREATMENT_GENERATING");        
+        break;
+
+    case 3:
+        printf("Led on %d state %s\n", a, "LED_TREATMENT_PAUSED");        
+        break;
+
+    case 4:
+        printf("Led on %d state %s\n", a, "LED_TREATMENT_BRIDGE_MODE");        
+        break;
+
+    default:
+        printf("Led on ERROR state!!!\n");
+        break;
+    }
 }
+
 
 
 void Signal_GenerateCWave_Reset (void)

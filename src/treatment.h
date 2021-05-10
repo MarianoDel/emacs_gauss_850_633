@@ -44,6 +44,7 @@ void TreatmentManager (void);
 treatment_state_e TreatmentGetState (void);
 resp_t TreatmentStart (void);
 void TreatmentStop (void);
+void TREATMENT_Timeouts (void);
 
 
 #endif    /* _TREATMENT_H_ */

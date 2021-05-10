@@ -10,6 +10,7 @@
 // Includes Modules for tests --------------------------------------------------
 #include "signals.h"
 #include "answers.h"
+#include "pwm.h"
 #include "tests_ok.h"
 
 #include <stdio.h>
@@ -22,15 +23,18 @@ extern treatment_params_t treatment_data;
 
 
 // Globals ---------------------------------------------------------------------
-
+extern unsigned short timer_signals;
 
 
 // Module Auxialiary Functions -------------------------------------------------
+void Update_TIM3_CH2 (unsigned short pwm);
+void Update_TIM3_CH1 (unsigned short pwm);
 
 
 // Module Functions for testing ------------------------------------------------
 void Test_Signals_Functions (void);
-    
+void Test_Signals_Waveforms (void);
+
 
 // Module Functions ------------------------------------------------------------
 
@@ -39,6 +43,7 @@ int main(int argc, char *argv[])
 {
 
     Test_Signals_Functions ();
+    Test_Signals_Waveforms ();
     
 }
 
@@ -186,14 +191,85 @@ void Test_Signals_Functions (void)
     }
     else
         PrintERR();
+
+
+    printf("Testing Power conversion 100%: ");    
+    if (Signal_Calculate_Pwm_From_Power(100) == DUTY_100_PERCENT)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    printf("Testing Power conversion 10%: ");    
+    if (Signal_Calculate_Pwm_From_Power(10) == DUTY_10_PERCENT)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    printf("Testing Power conversion 0%: ");    
+    if (Signal_Calculate_Pwm_From_Power(0) == DUTY_NONE)
+        PrintOK();
+    else
+        PrintERR();
     
-    
-    
-    
-           
     
 }
 
+
+void Test_Signals_Waveforms (void)
+{
+    printf("\nTesting Signals Waveforms\n");
+
+    printf("Testing CWave: \n");
+    Signal_GenerateCWave_Reset();
+    treatment_data.power_red = 100;
+    treatment_data.power_ired = 50;
+
+    for (int i = 0; i < 20; i++)
+    {
+        printf("loop: %d timer_signals: %d\n", i, timer_signals);        
+        Signal_GenerateCWave();
+    }
+
+
+    printf("Testing Pulsed: \n");
+    Signal_GeneratePulsed_Reset();
+    treatment_data.power_red = 100;
+    treatment_data.power_ired = 50;
+    treatment_data.frequency = 10;
+
+    for (int i = 0; i < 200; i++)
+    {
+        printf("loop: %d timer_signals: %d\n", i, timer_signals);
+        Signal_GeneratePulsed();
+        SIGNALS_Timeouts();
+    }
+
+    printf("Testing Triangular: \n");
+    Signal_GenerateTriangular_Reset();
+    treatment_data.power_red = 100;
+    treatment_data.power_ired = 50;
+    treatment_data.frequency = 10;
+
+    for (int i = 0; i < 200; i++)
+    {
+        printf("loop: %d timer_signals: %d\n", i, timer_signals);
+        Signal_GenerateTriangular();
+        SIGNALS_Timeouts();
+    }
+    
+}
+
+void Update_TIM3_CH2 (unsigned short pwm)
+{
+    printf("TIM3_CH2: %d\n", pwm);
+}
+
+void Update_TIM3_CH1 (unsigned short pwm)
+{
+    printf("TIM3_CH1: %d\n", pwm);
+}
 
 
 

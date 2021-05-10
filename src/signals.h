@@ -46,20 +46,16 @@ resp_t SetPowerRed (unsigned char pwr_r);
 resp_t SetPowerIRed (unsigned char pwr_ir);
 void Signal_StopAll (void);
 
-// void GenerateSignalReset (void);
+// Signals Generation
+void Signal_GenerateCWave_Reset (void);
+void Signal_GenerateCWave (void);
+void Signal_GeneratePulsed_Reset (void);
+void Signal_GeneratePulsed (void);
+void Signal_GenerateTriangular_Reset (void);
+void Signal_GenerateTriangular (void);
 
-// resp_t AssertTreatmentParams (void);
-// resp_t StartTreatment (void);
-// void StopTreatment (void);
-// error_t GetErrorStatus (void);
-// void SetErrorStatus (error_t);
-// void SendAllConf (void);
-// void TreatmentManager (void);
-// void Overcurrent_Shutdown (void);
-// void TreatmentManager_IntSpeed (void);
+void SIGNALS_Timeouts (void);
 
-// treatment_t GetTreatmentState (void);
-// gen_signal_state_t GetGenSignalState (void);
 
 #endif    /* _SIGNALS_H_ */
 

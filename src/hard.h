@@ -21,6 +21,12 @@
 // #define SOFTWARE_VERSION_1_1
 #define SOFTWARE_VERSION_1_0
 
+#define MY_OWN_CHANNEL    COMM_CHANNEL_1
+#define COMM_CHANNEL_1    1
+#define COMM_CHANNEL_2    2
+#define COMM_CHANNEL_3    3
+#define COMM_CHANNEL_4    4
+#define COMM_CHANNEL_5    5
 
 //---- Features Configuration -----------------
 
@@ -95,8 +101,6 @@
 #define LED_TREATMENT_PAUSED    3
 #define LED_NO_RFID    4
 
-#define CH1_VAL_OFFSET    0
-#define CH2_VAL_OFFSET    1
 
 //--- Stringtify Utils -----------------------
 #define str_macro(s) #s
