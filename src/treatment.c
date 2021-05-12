@@ -23,6 +23,7 @@ extern treatment_params_t treatment_data;
 // Globals ---------------------------------------------------------------------
 treatment_state_e treat_state;
 volatile unsigned short timer_treatment = 0;
+volatile unsigned short timer_treatment_fan = 0;
 
 
 
@@ -48,23 +49,39 @@ void TreatmentManager (void)
             break;
 
         case TREATMENT_STANDBY:
+            // we was on treatment with the fan active?
+            if ((!timer_treatment_fan) && (FanIsActive()))
+                FanOff();                
+            
             break;
 
         case TREATMENT_START_TO_GENERATE:    
             if (treatment_data.signal == CWAVE_SIGNAL)
             {
+                if ((treatment_data.power_red > MIN_POWER_TO_START_FAN) ||
+                    (treatment_data.power_ired > MIN_POWER_TO_START_FAN))
+                    FanOn();
+                
                 Signal_GenerateCWave_Reset();
                 treat_state = TREATMENT_GENERATING_CWAVE;
             }
 
             if (treatment_data.signal == PULSED_SIGNAL)
             {
+                if ((treatment_data.power_red > MIN_POWER_TO_START_FAN) ||
+                    (treatment_data.power_ired > MIN_POWER_TO_START_FAN))
+                    FanOn();                    
+
                 Signal_GeneratePulsed_Reset();                
                 treat_state = TREATMENT_GENERATING_PULSED;
             }
 
             if (treatment_data.signal == TRIANGULAR_SIGNAL)
             {
+                if ((treatment_data.power_red > MIN_POWER_TO_START_FAN) ||
+                    (treatment_data.power_ired > MIN_POWER_TO_START_FAN))
+                    FanOn();                    
+
                 Signal_GenerateTriangular_Reset();
                 treat_state = TREATMENT_GENERATING_TRIANGULAR;
             }
@@ -86,6 +103,10 @@ void TreatmentManager (void)
             
         case TREATMENT_STOPPING:
             Signal_StopAll();
+
+            //check if FAN was used
+            if (FanIsActive())
+                timer_treatment_fan = MIN_TIME_TO_WAIT_FOR_FAN;
             
             timer_treatment = 1000;
             treat_state = TREATMENT_STOPPING2;
@@ -168,5 +189,9 @@ void TREATMENT_Timeouts (void)
 {
     if (timer_treatment)
         timer_treatment--;
+
+    if (timer_treatment_fan)
+        timer_treatment_fan--;
+    
 }
 //--- end of file ---//

@@ -112,6 +112,10 @@ void HARD_Timeouts (void);
 void ChangeLed (unsigned char);
 void UpdateLed (void);
 
+void FanOn (void);
+void FanOff (void);
+unsigned char FanIsActive (void);
+
 
 #endif /* _HARD_H_ */
 

@@ -36,6 +36,8 @@ typedef struct {
 #define MAX_FREQ_ALLOWED    10
 #define MIN_POWER_ALLOWED    10
 #define MAX_POWER_ALLOWED    100
+#define MIN_POWER_TO_START_FAN    25
+#define MIN_TIME_TO_WAIT_FOR_FAN    20000
 
 
 // Module Exported Functions ---------------------------------------------------

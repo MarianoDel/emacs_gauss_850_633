@@ -306,6 +306,30 @@ void Signal_GenerateTriangular (void)
     printf("generate triangular\n");    
 }
 
+int fan_state = 0;
+void FanOn (void)
+{
+    fan_state = 0;
+    printf("FAN in on\n");
+}
+
+
+void FanOff (void)
+{
+    fan_state = 1;    
+    printf("FAN in off\n");    
+}
+
+
+unsigned char FanIsActive (void)
+{
+    if (fan_state)
+        return 1;
+    else
+        return 0;
+}
+
+
 
 //--- end of file ---//
 

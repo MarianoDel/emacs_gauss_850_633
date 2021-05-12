@@ -109,6 +109,27 @@ void UpdateLed (void)
 }
 
 
+void FanOn (void)
+{
+    CTRL_FAN_ON;
+}
+
+
+void FanOff (void)
+{
+    CTRL_FAN_OFF;
+}
+
+
+unsigned char FanIsActive (void)
+{
+    if (CTRL_FAN)
+        return 1;
+    else
+        return 0;
+}
+
+
 void HARD_Timeouts (void)
 {
     if (timer_led)

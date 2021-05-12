@@ -25,7 +25,6 @@
 #include "answers.h"
 #include "test_functions.h"
 #include "parameters.h"
-#include "temperatures.h"
 #include "pwm.h"
 
 #include "uart.h"
