@@ -180,6 +180,22 @@ void Test_Treatment_Assert (void)
         PrintERR();
 
 
+    printf("Testing Treatment Assert Params with power_red shut off: ");
+    treatment_data.power_red = 0;
+    if (TreatmentAssertParams() == resp_ok)
+        PrintOK();
+    else
+        PrintERR();
+
+
+    printf("Testing Treatment Assert Params with power_ired shut off: ");
+    treatment_data.power_ired = 0;
+    if (TreatmentAssertParams() == resp_ok)
+        PrintOK();
+    else
+        PrintERR();
+    
+
     treatment_data.power_ired = 10;
     treatment_data.power_red = 10;    
     printf("Testing Treatment Assert Params with signal error: ");

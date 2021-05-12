@@ -28,6 +28,7 @@ volatile unsigned short timer_signals = 0;
 
 // Private Module Functions ------------------------------
 unsigned short Signal_Calculate_Pwm_From_Power (unsigned char power);
+void SetPower (unsigned char * which_color, unsigned char power);
 
 
 // Module Functions ------------------------------------------------------------
@@ -71,33 +72,32 @@ resp_t SetFrequency (unsigned char freq)
 
 resp_t SetPowerRed (unsigned char a)
 {
-    // if ((treatment_state != TREATMENT_INIT_FIRST_TIME) && (treatment_state != TREATMENT_STANDBY))
-    //     return resp_error;
-
-    if (a > 100)
-        treatment_data.power_red = 100;
-    else if (a < 10)
-        treatment_data.power_red = 10;
-    else
-        treatment_data.power_red = a;
-
+    SetPower(&treatment_data.power_red, a);
     return resp_ok;
 }
 
 
 resp_t SetPowerIRed (unsigned char a)
 {
-    // if ((treatment_state != TREATMENT_INIT_FIRST_TIME) && (treatment_state != TREATMENT_STANDBY))
-    //     return resp_error;
-
-    if (a > 100)
-        treatment_data.power_ired = 100;
-    else if (a < 10)
-        treatment_data.power_ired = 10;
-    else
-        treatment_data.power_ired = a;
-
+    SetPower(&treatment_data.power_ired, a);
     return resp_ok;
+}
+
+
+void SetPower (unsigned char * which_color, unsigned char power)
+{
+    // channel power off?
+    if (power == 0)
+        *which_color = 0;
+    else
+    {
+        if (power > 100)
+            *which_color = 100;
+        else if (power < 10)
+            *which_color = 10;
+        else
+            *which_color = power;
+    }
 }
 
 

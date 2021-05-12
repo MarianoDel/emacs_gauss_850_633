@@ -153,13 +153,23 @@ void Test_Signals_Functions (void)
     printf("Testing PowerRed Set 0: ");
     treatment_data.power_red = 0xFF;
     if ((SetPowerRed(0) == resp_ok) &&
-        (treatment_data.power_red == 10))
+        (treatment_data.power_red == 0))
     {
         PrintOK();
     }
     else
         PrintERR();
 
+    printf("Testing PowerRed Set 1: ");
+    treatment_data.power_red = 0xFF;
+    if ((SetPowerRed(1) == resp_ok) &&
+        (treatment_data.power_red == 10))
+    {
+        PrintOK();
+    }
+    else
+        PrintERR();
+    
     printf("Testing PowerRed Set 10: ");
     treatment_data.power_red = 0xFF;
     if ((SetPowerRed(10) == resp_ok) &&

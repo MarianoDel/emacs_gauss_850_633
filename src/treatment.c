@@ -145,13 +145,19 @@ resp_t TreatmentAssertParams (void)
         (treatment_data.signal != TRIANGULAR_SIGNAL))
         return resp;
 
-    if ((treatment_data.power_red < MIN_POWER_ALLOWED) ||
-        (treatment_data.power_red > MAX_POWER_ALLOWED))
-        return resp;
+    if (treatment_data.power_red != 0)
+    {
+        if ((treatment_data.power_red < MIN_POWER_ALLOWED) ||
+            (treatment_data.power_red > MAX_POWER_ALLOWED))
+            return resp;
+    }
 
-    if ((treatment_data.power_ired < MIN_POWER_ALLOWED) ||
-        (treatment_data.power_ired > MAX_POWER_ALLOWED))
-        return resp;
+    if (treatment_data.power_red != 0)
+    {
+        if ((treatment_data.power_ired < MIN_POWER_ALLOWED) ||
+            (treatment_data.power_ired > MAX_POWER_ALLOWED))
+            return resp;
+    }
     
     return resp_ok;
     
