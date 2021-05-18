@@ -11,6 +11,7 @@
 // Includes --------------------------------------------------------------------
 #include "signals.h"
 #include "pwm.h"
+#include "uart.h"
 
 
 // Private Types Constants and Macros ------------------------------------------
@@ -200,6 +201,20 @@ void Signal_GeneratePulsed (void)
         break;
     
     }
+
+    //fuzzy synchro
+#ifdef USE_FUZZY_SYNCHRO
+    if (wave_state >= wave_ton)
+    {
+        if (Usart1SynchroGetted())
+        {
+            Usart1SynchroReset();
+            timer_signals = 0;
+            wave_state = wave_toff;
+        }
+    }
+#endif
+    
 }
 
 
@@ -287,6 +302,20 @@ void Signal_GenerateTriangular (void)
         break;
     
     }
+
+    //fuzzy synchro
+#ifdef USE_FUZZY_SYNCHRO
+    if (wave_state >= wave_rising_edge)
+    {
+        if (Usart1SynchroGetted())
+        {
+            Usart1SynchroReset();
+            timer_signals = 0;
+            edges_cnt = 0;
+            wave_state = wave_rising_edge;
+        }
+    }
+#endif
 }
 
 

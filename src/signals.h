@@ -12,6 +12,10 @@
 
 #include "answers.h"
 
+// Module Configs --------------------------------------------------------------
+#define USE_FUZZY_SYNCHRO    //synchronize the start of pulsed and triangular signals
+
+
 // Module Exported Types Constants and Macros ----------------------------------
 typedef enum {
     CWAVE_SIGNAL = 0,

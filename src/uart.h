@@ -1,5 +1,4 @@
 //---------------------------------------------
-// ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
@@ -10,30 +9,10 @@
 #ifndef _UART_H_
 #define _UART_H_
 
-//--- Exported types ---//
-//--- Exported constants ---//
-//--- Exported macro ---//
-#define USART1_CLK (RCC->APB2ENR & 0x00004000)
-#define USART1_CLK_ON RCC->APB2ENR |= 0x00004000
-#define USART1_CLK_OFF RCC->APB2ENR &= ~0x00004000
-
-#define USART2_CLK (RCC->APB1ENR & 0x00020000)
-#define USART2_CLK_ON RCC->APB1ENR |= 0x00020000
-#define USART2_CLK_OFF RCC->APB1ENR &= ~0x00020000
-
-#define USART_9600		5000
-#define USART_115200		416
-#define USART_250000		192
-
-#define USARTx_RX_DISA	USARTx->CR1 &= 0xfffffffb
-#define USARTx_RX_ENA	USARTx->CR1 |= 0x04
-
-#define SIZEOF_RXDATA 128
-#define SIZEOF_TXDATA 128
+// Module Exported Types Constants and Macros ----------------------------------
 
 
-
-//--- Exported functions ---//
+// Module Exported Functions ---------------------------------------------------
 unsigned char Usart1ReadBuffer (unsigned char *, unsigned short);
 
 void Usart1Config(void);
@@ -42,6 +21,9 @@ void Usart1Send (char *);
 void Usart1SendUnsigned(unsigned char *, unsigned char);
 void Usart1SendSingle(unsigned char );
 
+void Usart1SynchroSet (void);
+void Usart1SynchroReset (void);
+unsigned char Usart1SynchroGetted (void);
 
 #endif    /* _UART_H_ */
 

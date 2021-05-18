@@ -15,6 +15,19 @@
 #include <string.h>
 
 
+// Module Private Types Constants and Macros -----------------------------------
+#define USART1_CLK    (RCC->APB2ENR & 0x00004000)
+#define USART1_CLK_ON    (RCC->APB2ENR |= 0x00004000)
+#define USART1_CLK_OFF    (RCC->APB2ENR &= ~0x00004000)
+
+#define USART_9600		5000
+#define USART_115200		416
+#define USART_250000		192
+
+// #define USARTx_RX_DISA    (USARTx->CR1 &= 0xfffffffb)
+// #define USARTx_RX_ENA    (USARTx->CR1 |= 0x04)
+
+
 // Module Configs --------------------------------------------------------------
 
 
@@ -23,15 +36,18 @@ extern volatile unsigned char usart1_have_data;
 
 
 // Globals ---------------------------------------------------------------------
-#define SIZEOF_DATA    128
-volatile unsigned char tx1buff [SIZEOF_DATA];
-volatile unsigned char rx1buff [SIZEOF_DATA];
+#define SIZEOF_RXDATA 128
+#define SIZEOF_TXDATA 128
+volatile unsigned char tx1buff [SIZEOF_TXDATA];
+volatile unsigned char rx1buff [SIZEOF_RXDATA];
 
 volatile unsigned char * ptx1;
 volatile unsigned char * ptx1_pckt_index;
 volatile unsigned char * prx1;
 
 
+volatile unsigned char synchro_getted = 0;
+#define synchro_char    '*'
 // Module Private Types & Macros -----------------------------------------------
 
 
@@ -67,21 +83,26 @@ void USART1_IRQHandler(void)
     {
         dummy = USART1->RDR & 0x0FF;
 
-        if (prx1 < &rx1buff[SIZEOF_DATA - 1])
+        if (dummy == synchro_char)
+            Usart1SynchroSet();
+        else
         {
-            if ((dummy == '\n') || (dummy == '\r') || (dummy == 26))		//26 es CTRL-Z
+            if (prx1 < &rx1buff[SIZEOF_RXDATA - 1])
             {
-                *prx1 = '\0';
-                usart1_have_data = 1;
+                if ((dummy == '\n') || (dummy == '\r') || (dummy == 26))		//26 es CTRL-Z
+                {
+                    *prx1 = '\0';
+                    usart1_have_data = 1;
+                }
+                else
+                {
+                    *prx1 = dummy;
+                    prx1++;
+                }
             }
             else
-            {
-                *prx1 = dummy;
-                prx1++;
-            }
+                prx1 = rx1buff;    //soluciona problema bloqueo con garbage
         }
-        else
-            prx1 = rx1buff;    //soluciona problema bloqueo con garbage
         
     }
 
@@ -164,5 +185,22 @@ void Usart1Config(void)
     NVIC_SetPriority(USART1_IRQn, 7);
 }
 
+
+void Usart1SynchroSet (void)
+{
+    synchro_getted = 1;
+}
+
+
+void Usart1SynchroReset (void)
+{
+    synchro_getted = 0;
+}
+
+
+unsigned char Usart1SynchroGetted (void)
+{
+    return synchro_getted;
+}
 
 //--- end of file ---//
