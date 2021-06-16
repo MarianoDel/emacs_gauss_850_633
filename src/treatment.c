@@ -173,7 +173,7 @@ resp_t TreatmentAssertParams (void)
             return resp;
     }
 
-    if (treatment_data.power_red != 0)
+    if (treatment_data.power_ired != 0)
     {
         if ((treatment_data.power_ired < MIN_POWER_ALLOWED) ||
             (treatment_data.power_ired > MAX_POWER_ALLOWED))
